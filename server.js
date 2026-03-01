@@ -8,27 +8,49 @@ app.use(express.json());
 
 const razorpay = new Razorpay({
   key_id: "rzp_test_SLshXwiXTLFqSJ",
-  key_secret: "TEMP_SECRET", // will replace later
+  key_secret: "TEMP_SECRET", // Replace later with real secret
 });
+
+/* ================= CREATE ORDER ================= */
 
 app.post("/create-order", async (req, res) => {
   try {
-    const options = {
-      amount: 199 * 100,
+    const { plan } = req.body;
+
+    let amount;
+    let durationDays;
+
+    if (plan === "monthly") {
+      amount = 199 * 100;
+      durationDays = 30;
+    } else if (plan === "yearly") {
+      amount = 1499 * 100;
+      durationDays = 365;
+    } else {
+      return res.status(400).json({ error: "Invalid plan selected" });
+    }
+
+    const order = await razorpay.orders.create({
+      amount: amount,
       currency: "INR",
       receipt: "receipt_" + Date.now(),
-    };
+    });
 
-    const order = await razorpay.orders.create(options);
-    res.json(order);
+    res.json({
+      order,
+      durationDays,
+      plan,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send("Error creating order");
   }
 });
 
-// TEMP verification (no signature check yet)
+/* ================= VERIFY PAYMENT (TEMP) ================= */
+
 app.post("/verify-payment", async (req, res) => {
+  // Temporary success response
   res.json({ success: true });
 });
 
